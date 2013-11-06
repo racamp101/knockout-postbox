@@ -105,6 +105,14 @@ this.value = ko.observable().subscribeTo("mytopic", transform);
 
 //receive updates from "mytopic", initialize with latest published value, and send updates through transform
 this.value = ko.observable().subscribeTo("mytopic", true, transform);
+
+//this will do the sub/pub link up automaticly and only requires one side to have this. This creates a true seperation of concerns 
+//of the ViewModel goes away the observable still works but fails to link up. 
+//viewModels.SomeModel.Text in my example I have a global class viewModels and I added SomeModel to it somehere else in the page
+//this link will look for that model and if it finds it it will link the Text observable to this abservable
+//if it doesn't find the viewModel it will try 9 more times hopefully allowing the model to load if not loaded yet.
+this.value = ko.observable().link("viewModels.SomeModel.Text");
+
 ```
 
 
