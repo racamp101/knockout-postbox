@@ -163,6 +163,60 @@
 
         return this;
     };
+    
+    // give just the model.[observable] to sync with and your done. 
+    // This will wait for the model to be created then sync up automatically
+    // Allowing a complete seperation of consernse as only the observable that needs to sync is set
+    // No need to manually go modify second model to pub/sub on a topic
+    //direction = Two way, In, Out -- if this object is set to In then other object will get out and vise versa
+    ko.subscribable.fn.link = function (binding, direction, initializeWithLatestValue, skipInitialOrEqualityComparer, equalityComparer) {
+        var self = this;
+        if (!direction) direction = "TwoWay";
+        this.dir = direction;
+
+        this.topic = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+
+        if (self.dir == "TwoWay" || self.dir == "In")
+            this.subscribeTo(self.topic, initializeWithLatestValue);
+        if (self.dir == "TwoWay" || self.dir == "Out")
+            this.publishOn(self.topic, skipInitialOrEqualityComparer, equalityComparer);
+
+        setTimeout(function () {
+            koWaitForBindingInit(binding, 1);
+        }, 0);
+
+        return this;
+
+        function koWaitForBindingInit(binding, tries) {
+            var b = kogetFunctionByName(binding, window);
+            if (b) {
+                if (self.dir == "TwoWay" || self.dir == "Out")
+                    b.subscribeTo(self.topic, initializeWithLatestValue);
+                if (self.dir == "TwoWay" || self.dir == "In")
+                    b.publishOn(self.topic, skipInitialOrEqualityComparer, equalityComparer);
+            } else {
+                if (tries < 10)
+                    setTimeout(function () {
+                        koWaitForBindingInit(binding, tries + 1);
+                    }, 0);
+            }
+        }
+
+        function kogetFunctionByName(functionName, context) {
+            var namespaces = functionName.split(".");
+            var func = namespaces.pop();
+            for (var i = 0; i < namespaces.length; i++) {
+                if (!context) return null;
+                context = context[namespaces[i]];
+            }
+            if (!context) return null;
+            return context[func];
+        }
+
+    };
 
     ko.postbox = exports;
 }));
